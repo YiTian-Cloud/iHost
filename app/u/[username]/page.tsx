@@ -250,19 +250,40 @@ export default async function PublicProfilePage({
   </section>
 )}
 
-        <div className="pt-6 border-t border-emerald-100 mt-4">
-          <p className="text-sm text-gray-500 text-center mb-3">
-            Want your own iHost page?
-          </p>
-          <div className="flex justify-center">
+<div className="pt-6 border-t border-emerald-100 mt-4 space-y-3">
+          {/* Owner / power actions */}
+          <div className="flex flex-wrap justify-center gap-2">
+            {/* Edit mode (for the owner; others will hit login) */}
+            <a
+              href="/dashboard/editor"
+              className="inline-flex items-center rounded-full border border-emerald-500/70 bg-white px-4 py-2 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+            >
+              ✏️ Edit this iHost
+            </a>
+
+            {/* View other host pages (community wall on landing) */}
+            <a
+              href="/"
+              className="inline-flex items-center rounded-full border border-slate-300 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-800 hover:bg-slate-100"
+            >
+              👀 View iHost Community
+            </a>
+          </div>
+
+          {/* CTA for new users */}
+          <div className="pt-2 text-center">
+            <p className="text-xs text-gray-500 mb-2">
+              Want your own iHost page?
+            </p>
             <a
               href="/register"
-              className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+              className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
             >
               Create your page
             </a>
           </div>
         </div>
+
       </div>
     </main>
   );

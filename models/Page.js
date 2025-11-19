@@ -23,6 +23,9 @@ const PageSchema = new mongoose.Schema(
     title: { type: String, default: "" },
     blocks: { type: [BlockSchema], default: [] },
     published: { type: Boolean, default: false },
+
+    communityListed: { type: Boolean, default: false },
+    
   },
   { timestamps: true }
 );

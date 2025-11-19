@@ -11,6 +11,7 @@ type Block =
       style: "body" | "heading" | "subheading";
       url?: undefined;
       description?: undefined;
+      content?: undefined;
     }
   | {
       id: string;
@@ -21,20 +22,28 @@ type Block =
       description?: string;
       content?: undefined;
     }
-    | {
+  | {
       id: string;
       type: "post";
-      text: string;               // post title
-      content: string;            // full article
+      text: string; // post title
+      content: string; // full article
       style?: "body" | "heading" | "subheading";
-      description?: string;       // short summary/excerpt
+      description?: string; // short summary/excerpt
       url?: undefined;
     };
-    
+
 interface PageResponse {
   title: string;
   published: boolean;
-  blocks: { type: string; text?: string; url?: string; style?: string }[];
+  blocks: {
+    type: string;
+    text?: string;
+    url?: string;
+    style?: string;
+    description?: string;
+    content?: string;
+  }[];
+  communityListed?: boolean;
 }
 
 interface MeResponse {
@@ -57,6 +66,7 @@ export default function PageEditor() {
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
   const [published, setPublished] = useState(false);
   const [username, setUsername] = useState<string | null>(null);
+  const [communityListed, setCommunityListed] = useState(false);
 
   // Load current user + page
   useEffect(() => {
@@ -99,45 +109,46 @@ export default function PageEditor() {
         } else {
           setTitle(data.title || "My iHost Page");
           setPublished(!!data.published);
+          setCommunityListed(!!data.communityListed);
 
-          const withIds: Block[] = (data.blocks || []).map((raw: any, idx: number) => {
-            const baseStyle =
-              raw.style === "heading" || raw.style === "subheading"
-                ? (raw.style as "heading" | "subheading")
-                : "body";
-          
-            if (raw.type === "link") {
+          const withIds: Block[] = (data.blocks || []).map(
+            (raw: any, idx: number) => {
+              const baseStyle =
+                raw.style === "heading" || raw.style === "subheading"
+                  ? (raw.style as "heading" | "subheading")
+                  : "body";
+
+              if (raw.type === "link") {
+                return {
+                  id: `${idx}-${Date.now()}`,
+                  type: "link",
+                  text: raw.text || "",
+                  url: raw.url || "",
+                  style: baseStyle,
+                  description: raw.description || "",
+                };
+              }
+
+              if (raw.type === "post") {
+                return {
+                  id: `${idx}-${Date.now()}`,
+                  type: "post",
+                  text: raw.text || "",
+                  content: raw.content || "",
+                  style: baseStyle,
+                  description: raw.description || "",
+                };
+              }
+
+              // default: text block
               return {
                 id: `${idx}-${Date.now()}`,
-                type: "link",
+                type: "text",
                 text: raw.text || "",
-                url: raw.url || "",
                 style: baseStyle,
-                description: raw.description || "",
               };
             }
-          
-            if (raw.type === "post") {
-              return {
-                id: `${idx}-${Date.now()}`,
-                type: "post",
-                text: raw.text || "",
-                content: raw.content || "",
-                style: baseStyle,
-                description: raw.description || "",
-              };
-            }
-          
-            // default: text block
-            return {
-              id: `${idx}-${Date.now()}`,
-              type: "text",
-              text: raw.text || "",
-              style: baseStyle,
-            };
-          });
-          
-          
+          );
 
           setBlocks(withIds);
         }
@@ -171,11 +182,11 @@ export default function PageEditor() {
         text: "",
         url: "",
         style: "body",
-        description: "",   // ✅ new
+        description: "",
       },
     ]);
   }
-  
+
   function addPostBlock() {
     setBlocks((prev) => [
       ...prev,
@@ -189,7 +200,6 @@ export default function PageEditor() {
       },
     ]);
   }
-  
 
   function updateBlock(id: string, updates: Partial<Block>) {
     setBlocks((prev) =>
@@ -207,13 +217,16 @@ export default function PageEditor() {
     setError(null);
 
     try {
+      const nextPublished = publish ? true : published;
 
       const body = {
         title,
-        published: publish ? true : published,
+        published: nextPublished,
+        // Only list in community if published
+        communityListed: nextPublished ? communityListed : false,
         blocks: blocks.map((b) => {
           if (b.type === "link") {
-            const linkBlock = b as any; // TS helper
+            const linkBlock = b as any;
             return {
               type: "link",
               text: linkBlock.text,
@@ -222,9 +235,9 @@ export default function PageEditor() {
               description: linkBlock.description || "",
             };
           }
-      
+
           if (b.type === "post") {
-            const postBlock = b as any; // TS helper
+            const postBlock = b as any;
             return {
               type: "post",
               text: postBlock.text,
@@ -233,7 +246,7 @@ export default function PageEditor() {
               description: postBlock.description || "",
             };
           }
-      
+
           // default: text block
           return {
             type: "text",
@@ -242,9 +255,7 @@ export default function PageEditor() {
           };
         }),
       };
-      
-    
-      
+
       const res = await fetch("/api/page", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -257,6 +268,7 @@ export default function PageEditor() {
         setError(data.error || "Failed to save");
       } else {
         setPublished(!!data.published);
+        setCommunityListed(!!data.communityListed ?? communityListed);
         setSavedMessage(publish ? "Page published" : "Draft saved");
         setTimeout(() => setSavedMessage(null), 2500);
       }
@@ -301,31 +313,33 @@ export default function PageEditor() {
             <button
               type="button"
               onClick={addPostBlock}
-              className="..."
+              className="px-3 py-1 text-sm rounded bg-indigo-600 text-white hover:bg-indigo-700"
             >
-              + iStacks Post   {/* ✅ new */}
+              + iStacks Post
             </button>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">
-          {username && (
-  <a
-    href={`/u/${encodeURIComponent(
-      username
-    )}?handle=${encodeURIComponent(username)}`}
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-xs text-blue-600 hover:underline"
-  >
-    View public page ↗
-  </a>
-)}
+            {username && (
+              <a
+                href={`/u/${encodeURIComponent(
+                  username
+                )}?handle=${encodeURIComponent(username)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:underline"
+              >
+                View public page ↗
+              </a>
+            )}
 
             <span className="text-xs text-slate-500">
               Status:{" "}
               <span
                 className={
-                  published ? "text-emerald-700 font-semibold" : "text-slate-700"
+                  published
+                    ? "text-emerald-700 font-semibold"
+                    : "text-slate-700"
                 }
               >
                 {published ? "Published" : "Draft"}
@@ -372,6 +386,35 @@ export default function PageEditor() {
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Page title"
           />
+
+          {/* Community visibility */}
+          <section className="space-y-2 border border-slate-100 rounded-xl px-3 py-3 bg-slate-50/60">
+            <h2 className="text-sm font-semibold text-slate-900">
+              Community visibility
+            </h2>
+            <p className="text-xs text-slate-600">
+              Control whether your iHost page appears in the public{" "}
+              <span className="font-semibold">Posted Community</span> list on
+              the homepage.
+            </p>
+
+            <label className="inline-flex items-center gap-2 text-sm text-slate-800 mt-1">
+              <input
+                type="checkbox"
+                className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                checked={communityListed}
+                disabled={!published}
+                onChange={(e) => setCommunityListed(e.target.checked)}
+              />
+              <span>List my page in Posted Community</span>
+            </label>
+
+            {!published && (
+              <p className="text-xs text-amber-600 mt-1">
+                Publish your page first before joining the community.
+              </p>
+            )}
+          </section>
 
           {/* Blocks */}
           <div className="space-y-4">
@@ -429,7 +472,6 @@ export default function PageEditor() {
                 );
               }
 
-              //post
               if (block.type === "post") {
                 return (
                   <div
@@ -448,7 +490,7 @@ export default function PageEditor() {
                         Delete
                       </button>
                     </div>
-              
+
                     <div className="space-y-2">
                       {/* Title */}
                       <input
@@ -459,17 +501,19 @@ export default function PageEditor() {
                         }
                         placeholder="Post title (e.g., Why I built iHost)"
                       />
-              
+
                       {/* Short description / subtitle */}
                       <input
                         className="w-full text-xs border rounded-md px-2 py-1 outline-none focus:ring-2 focus:ring-indigo-500"
                         value={block.description || ""}
                         onChange={(e) =>
-                          updateBlock(block.id, { description: e.target.value })
+                          updateBlock(block.id, {
+                            description: e.target.value,
+                          })
                         }
                         placeholder="Optional short summary shown under the title"
                       />
-              
+
                       {/* Article body */}
                       <textarea
                         className="w-full text-sm border rounded-md px-2 py-2 outline-none focus:ring-2 focus:ring-indigo-500 min-h-[140px]"
@@ -480,13 +524,13 @@ export default function PageEditor() {
                         placeholder="Write your iStacks article here. You can use blank lines and simple paragraphs."
                       />
                       <p className="text-[11px] text-gray-500">
-                        Tip: Keep it simple for now — we can add rich formatting later.
+                        Tip: Keep it simple for now — we can add rich
+                        formatting later.
                       </p>
                     </div>
                   </div>
                 );
               }
-              
 
               // link block
               return (
@@ -507,40 +551,42 @@ export default function PageEditor() {
                     </button>
                   </div>
                   <div className="space-y-2">
-        <input
-          className="w-full text-sm border rounded-md px-2 py-1 outline-none focus:ring-2 focus:ring-emerald-500"
-          value={block.text}
-          onChange={(e) =>
-            updateBlock(block.id, { text: e.target.value })
-          }
-          placeholder="Link label (e.g., Golf Connect)"
-        />
-        <input
-          className="w-full text-sm border rounded-md px-2 py-1 outline-none focus:ring-2 focus:ring-emerald-500"
-          value={block.url}
-          onChange={(e) =>
-            updateBlock(block.id, { url: e.target.value })
-          }
-          placeholder="https://..."
-        />
-        <textarea
-          className="w-full text-xs border rounded-md px-2 py-1 outline-none focus:ring-2 focus:ring-emerald-500"
-          value={block.description || ""}
-          onChange={(e) =>
-            updateBlock(block.id, { description: e.target.value })
-          }
-          placeholder="Short description (e.g., Landing page listing all my apps and social links)"
-          rows={2}
-        />
-      </div>
-
+                    <input
+                      className="w-full text-sm border rounded-md px-2 py-1 outline-none focus:ring-2 focus:ring-emerald-500"
+                      value={block.text}
+                      onChange={(e) =>
+                        updateBlock(block.id, { text: e.target.value })
+                      }
+                      placeholder="Link label (e.g., Golf Connect)"
+                    />
+                    <input
+                      className="w-full text-sm border rounded-md px-2 py-1 outline-none focus:ring-2 focus:ring-emerald-500"
+                      value={block.url}
+                      onChange={(e) =>
+                        updateBlock(block.id, { url: e.target.value })
+                      }
+                      placeholder="https://..."
+                    />
+                    <textarea
+                      className="w-full text-xs border rounded-md px-2 py-1 outline-none focus:ring-2 focus:ring-emerald-500"
+                      value={block.description || ""}
+                      onChange={(e) =>
+                        updateBlock(block.id, {
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Short description (e.g., Landing page listing all my apps and social links)"
+                      rows={2}
+                    />
+                  </div>
                 </div>
               );
             })}
 
             {blocks.length === 0 && (
               <p className="text-sm text-slate-400">
-                Use the toolbar above to add text or link blocks to your page.
+                Use the toolbar above to add text, links, or iStacks posts to
+                your page.
               </p>
             )}
           </div>

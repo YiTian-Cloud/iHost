@@ -40,6 +40,7 @@ export async function GET(req) {
       title: "My iHost Page",
       blocks: [],
       published: false,
+      communityListed: false,
     });
     page = page.toObject();
   }
@@ -48,6 +49,7 @@ export async function GET(req) {
     title: page.title || "",
     blocks: page.blocks || [],
     published: !!page.published,
+    communityListed: !!page.communityListed,
   });
 }
 
@@ -61,55 +63,32 @@ export async function PUT(req) {
   }
 
   const body = await req.json();
-  const { title, blocks, published } = body;
+  const { title, blocks, published, communityListed } = body;
 
   const cleanedBlocks = Array.isArray(blocks)
-  ? blocks.map((b) => {
-      const base = {
+    ? blocks.map((b) => ({
+        type: b.type === "link" || b.type === "post" ? b.type : "text",
         text: b.text || "",
+        url: b.type === "link" ? b.url || "" : "",
         style:
           b.style === "heading" || b.style === "subheading"
             ? b.style
             : "body",
-      };
+        description: b.description || "",
+        content: b.type === "post" ? b.content || "" : "",
+      }))
+    : [];
 
-      if (b.type === "link") {
-        return {
-          type: "link",
-          ...base,
-          url: b.url || "",
-          description: b.description || "",
-          content: "", // links don’t use content
-        };
-      }
-
-      if (b.type === "post") {
-        return {
-          type: "post",
-          ...base,
-          url: "", // no external URL for now
-          description: b.description || "",
-          content: b.content || "",   // ✅ full article body
-        };
-      }
-
-      // default fallback: plain text block
-      return {
-        type: "text",
-        ...base,
-        url: "",
-        description: "",
-        content: "",
-      };
-    })
-  : [];
+  const isPublished = !!published;
+  const isListed = isPublished && !!communityListed; // only list if published
 
   const page = await Page.findOneAndUpdate(
     { userId },
     {
       title: title || "",
       blocks: cleanedBlocks,
-      published: !!published,
+      published: isPublished,
+      communityListed: isListed,
     },
     { upsert: true, new: true }
   ).lean();
@@ -117,5 +96,6 @@ export async function PUT(req) {
   return NextResponse.json({
     ok: true,
     published: !!page.published,
+    communityListed: !!page.communityListed,
   });
 }
