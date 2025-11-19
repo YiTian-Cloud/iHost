@@ -100,41 +100,43 @@ export default function PageEditor() {
           setTitle(data.title || "My iHost Page");
           setPublished(!!data.published);
 
-          const withIds: Block[] = (data.blocks || []).map((b, idx) => {
+          const withIds: Block[] = (data.blocks || []).map((raw: any, idx: number) => {
             const baseStyle =
-              b.style === "heading" || b.style === "subheading"
-                ? (b.style as "heading" | "subheading")
+              raw.style === "heading" || raw.style === "subheading"
+                ? (raw.style as "heading" | "subheading")
                 : "body";
           
-            if (b.type === "link") {
+            if (raw.type === "link") {
               return {
                 id: `${idx}-${Date.now()}`,
                 type: "link",
-                text: b.text || "",
-                url: b.url || "",
+                text: raw.text || "",
+                url: raw.url || "",
                 style: baseStyle,
-                description: b.description || "",
+                description: raw.description || "",
               };
             }
           
-            if (b.type === "post") {
+            if (raw.type === "post") {
               return {
                 id: `${idx}-${Date.now()}`,
                 type: "post",
-                text: b.text || "",
-                content: b.content || "",
+                text: raw.text || "",
+                content: raw.content || "",
                 style: baseStyle,
-                description: b.description || "",
+                description: raw.description || "",
               };
             }
           
+            // default: text block
             return {
               id: `${idx}-${Date.now()}`,
               type: "text",
-              text: b.text || "",
+              text: raw.text || "",
               style: baseStyle,
             };
           });
+          
           
 
           setBlocks(withIds);
@@ -205,31 +207,34 @@ export default function PageEditor() {
     setError(null);
 
     try {
+
       const body = {
         title,
         published: publish ? true : published,
         blocks: blocks.map((b) => {
           if (b.type === "link") {
+            const linkBlock = b as any; // TS helper
             return {
               type: "link",
-              text: b.text,
-              url: b.url,
-              style: b.style || "body",
-              description: b.description || "",
+              text: linkBlock.text,
+              url: linkBlock.url,
+              style: linkBlock.style || "body",
+              description: linkBlock.description || "",
             };
           }
       
           if (b.type === "post") {
+            const postBlock = b as any; // TS helper
             return {
               type: "post",
-              text: b.text,
-              content: b.content || "",
-              style: b.style || "body",
-              description: b.description || "",
+              text: postBlock.text,
+              content: postBlock.content || "",
+              style: postBlock.style || "body",
+              description: postBlock.description || "",
             };
           }
       
-          // text
+          // default: text block
           return {
             type: "text",
             text: b.text,
@@ -237,6 +242,8 @@ export default function PageEditor() {
           };
         }),
       };
+      
+    
       
       const res = await fetch("/api/page", {
         method: "PUT",

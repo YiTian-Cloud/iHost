@@ -1,9 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, FormEvent  } from "react";
+
+interface LinkItem {
+  _id: string;
+  label: string;
+  url: string;
+  description?: string;
+}
 
 export default function LinksSection() {
-  const [links, setLinks] = useState([]);
+  const [links, setLinks] = useState<LinkItem[]>([]);
   const [label, setLabel] = useState("");
   const [url, setUrl] = useState("");
 
@@ -13,7 +20,7 @@ export default function LinksSection() {
     setLinks(data.links || []);
   }
 
-  async function addLink(e) {
+  async function addLink(e: FormEvent) {
     e.preventDefault();
     await fetch("/api/links", {
       method: "POST",
