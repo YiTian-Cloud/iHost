@@ -268,7 +268,11 @@ export default function PageEditor() {
         setError(data.error || "Failed to save");
       } else {
         setPublished(!!data.published);
-        setCommunityListed(!!data.communityListed ?? communityListed);
+        setCommunityListed(
+          typeof (data as any).communityListed === "boolean"
+            ? (data as any).communityListed
+            : communityListed
+        );
         setSavedMessage(publish ? "Page published" : "Draft saved");
         setTimeout(() => setSavedMessage(null), 2500);
       }
