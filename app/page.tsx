@@ -2,6 +2,7 @@ import Link from "next/link";
 import { connectDB } from "@/lib/db";
 import { Page } from "@/models/Page";
 import { Profile } from "@/models/Profile";
+import HeroQrClient from "./HeroQrClient"; // ✅ default import
 
 interface CommunityItem {
   username: string;
@@ -36,9 +37,7 @@ async function getCommunityMembers(): Promise<CommunityItem[]> {
     const prof = profileMap.get(p.userId.toString());
     const title =
       p.title ||
-      (prof?.displayName
-        ? `${prof.displayName}'s iHost`
-        : "iHost page");
+      (prof?.displayName ? `${prof.displayName}'s iHost` : "iHost page");
 
     return {
       username: prof?.username || "unknown",
@@ -63,8 +62,8 @@ export default async function HomePage() {
         {/* Hero */}
         <section className="space-y-4">
           <h1 className="text-3xl md:text-4xl font-bold text-slate-900 leading-snug">
-            Bring all of <span className="text-emerald-600">you</span> into
-            one page.
+            Bring all of <span className="text-emerald-600">you</span> into one
+            page.
           </h1>
 
           <p className="text-base md:text-lg text-slate-700 leading-relaxed">
@@ -90,6 +89,8 @@ export default async function HomePage() {
               Sign in
             </Link>
           </div>
+
+
         </section>
 
         {/* What you can do */}
@@ -146,14 +147,17 @@ export default async function HomePage() {
             Featured iHost community
           </h2>
           <p className="text-sm text-slate-600">
-            These are real iHost pages that chose to be listed. Click any
-            handle to see how they bring their apps, links, and iStacks together.
+            These are real iHost pages that chose to be listed. Click any handle
+            to see how they bring their apps, links, and iStacks together.
           </p>
 
           {community.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4 text-sm text-emerald-800">
-              No pages are listed yet. Publish your page in the editor and enable{" "}
-              <span className="font-semibold">“List my page in Posted Community”</span>{" "}
+              No pages are listed yet. Publish your page in the editor and
+              enable{" "}
+              <span className="font-semibold">
+                “List my page in Posted Community”
+              </span>{" "}
               to appear here.
             </div>
           ) : (
@@ -161,9 +165,9 @@ export default async function HomePage() {
               {community.map((item) => (
                 <Link
                   key={item.username}
-                  href={`/u/${encodeURIComponent(item.username)}?handle=${encodeURIComponent(
+                  href={`/u/${encodeURIComponent(
                     item.username
-                  )}`}
+                  )}?handle=${encodeURIComponent(item.username)}`}
                   className="flex items-center justify-between gap-2 rounded-xl border border-emerald-100 bg-white px-4 py-3 text-sm hover:border-emerald-400 hover:bg-emerald-50 transition"
                 >
                   <div className="space-y-0.5">
@@ -171,7 +175,7 @@ export default async function HomePage() {
                       {item.displayName || item.username}
                     </p>
                     <p className="text-xs text-slate-500">@{item.username}</p>
-                    <p className="avtext-xs text-slate-600 line-clamp-2">
+                    <p className="text-xs text-slate-600 line-clamp-2">
                       {item.title}
                     </p>
                   </div>
@@ -184,9 +188,14 @@ export default async function HomePage() {
           )}
 
           <p className="text-[11px] text-slate-500 pt-1">
-            Want to join? Create an iHost page, publish it, and toggle “Community visibility”
-            in your editor.
+            Want to join? Create an iHost page, publish it, and toggle “Community
+            visibility” in your editor.
           </p>
+
+                    {/* QR widget under hero */}
+                    <div className="pt-4">
+            <HeroQrClient />
+          </div>
         </section>
       </div>
     </main>

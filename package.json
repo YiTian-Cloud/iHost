@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@yitian-cloud/qr-link-widget": "file:../qr-link-widget/yitian-cloud-qr-link-widget-0.1.0.tgz",
     "bcrypt": "^6.0.0",
     "jsonwebtoken": "^9.0.2",
     "mogoose": "^0.0.1-security",
