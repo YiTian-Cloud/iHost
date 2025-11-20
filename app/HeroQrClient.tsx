@@ -1,6 +1,6 @@
 "use client";
 
-import { QrLinkWidget } from "@yitian-cloud/qr-link-widget";
+import { QrLinkWidget } from "qr-link-widget";
 
 const HOME_URL =
   process.env.NEXT_PUBLIC_SITE_URL ||
