@@ -61,7 +61,7 @@ export default async function PublicProfilePage({
           </p>
           <div className="mt-4">
             <a
-              href="/register"
+              href="/"
               className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
             >
               Create your own page
@@ -276,7 +276,7 @@ export default async function PublicProfilePage({
               Want your own iHost page?
             </p>
             <a
-              href="/register"
+              href="/"
               className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-semibold text-white hover:bg-emerald-700"
             >
               Create your page
