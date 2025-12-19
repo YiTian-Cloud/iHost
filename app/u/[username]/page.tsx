@@ -1,21 +1,39 @@
 import { connectDB } from "@/lib/db";
 import { Profile } from "@/models/Profile";
 import { Page } from "@/models/Page";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+
 
 export default async function PublicProfilePage({
   params,
   searchParams,
 }: {
-  params: { username?: string };
-  searchParams: Promise<{ handle?: string }>;
+  params: any;       // normalize runtime
+  searchParams: any; // normalize runtime
 }) {
-  // ✅ unwrap searchParams (it’s a Promise in Next 16)
-  const sp = await searchParams;
+  // ✅ Normalize params (sometimes Next can pass unexpected shapes)
+  const p = typeof params?.then === "function" ? await params : (params ?? {});
+  const rawUsername = p?.username;
 
-  const username =
-    (sp?.handle as string | undefined) ||
-    (params.username as string | undefined) ||
-    "";
+  // ✅ Normalize searchParams
+  const sp =
+    typeof searchParams?.then === "function"
+      ? await searchParams
+      : (searchParams ?? {});
+
+  const rawHandle = Array.isArray(sp?.handle) ? sp.handle[0] : sp?.handle;
+  const handle = String(rawHandle ?? "").trim();
+
+  // ✅ Safe path username (fallback to yitian for demo)
+  const pathUsername = String(rawUsername ?? "yitian").trim();
+
+  // ✅ Canonicalize /u/yitian → /u/yitian?handle=yitian
+  if (!handle && pathUsername) {
+    redirect(`/u/${pathUsername}?handle=${pathUsername}`);
+  }
+
+  const username = handle || pathUsername;
 
   console.log("Public page username resolved as:", username);
 
