@@ -3,7 +3,44 @@ import { Profile } from "@/models/Profile";
 import { Page } from "@/models/Page";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function sanitizeRichHtml(html: string) {
+  return sanitizeHtml(String(html ?? ""), {
+    allowedTags: [
+      "p",
+      "br",
+      "strong",
+      "b",
+      "em",
+      "i",
+      "u",
+      "h1",
+      "h2",
+      "h3",
+      "ul",
+      "ol",
+      "li",
+      "blockquote",
+      "code",
+      "pre",
+      "span",
+    ],
+    allowedAttributes: {
+      span: ["style"],
+    },
+    // Allow TipTap inline color/highlight styles
+    allowedStyles: {
+      span: {
+        color: [/^#(0-9a-fA-F){3,8}$/, /^rgb\(/, /^rgba\(/],
+        "background-color": [/^#(0-9a-fA-F){3,8}$/, /^rgb\(/, /^rgba\(/],
+      },
+    },
+  });
+}
 
 
 export default async function PublicProfilePage({
@@ -263,9 +300,10 @@ export default async function PublicProfilePage({
           <div
   className="px-4 pb-4 pt-3 text-sm text-gray-800 border-t border-indigo-100
              prose prose-sm max-w-none prose-headings:mt-3 prose-p:my-2 prose-li:my-1"
-  dangerouslySetInnerHTML={{
-    __html: DOMPurify.sanitize(String(block.content ?? "")),
-  }}
+             dangerouslySetInnerHTML={{
+              __html: sanitizeRichHtml(String(block.content ?? "")),
+            }}
+            
 />
 
         </details>
