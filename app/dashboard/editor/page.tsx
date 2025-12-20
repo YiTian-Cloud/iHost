@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import RichTextEditor from "../../../components/editor/RichTextEditor";
+
 
 type Block =
   | {
@@ -32,6 +34,19 @@ type Block =
       url?: undefined;
     };
 
+    function normalizeRichHtml(html: string) {
+      let s = String(html ?? "");
+    
+      // 1) Make truly empty paragraphs visible: <p></p> -> <p><br></p>
+      s = s.replace(/<p>(\s|&nbsp;|<br\s*\/?>)*<\/p>/g, "<p><br></p>");
+    
+      // 2) Preserve runs of 2+ spaces in normal text by converting to &nbsp;
+      //    (HTML collapses multiple spaces; this prevents collapse)
+      s = s.replace(/ {2,}/g, (m) => "&nbsp;".repeat(m.length));
+    
+      return s;
+    }
+    
 interface PageResponse {
   title: string;
   published: boolean;
@@ -241,7 +256,7 @@ export default function PageEditor() {
             return {
               type: "post",
               text: postBlock.text,
-              content: postBlock.content || "",
+              content: normalizeRichHtml(postBlock.content || ""),
               style: postBlock.style || "body",
               description: postBlock.description || "",
             };
@@ -519,17 +534,13 @@ export default function PageEditor() {
                       />
 
                       {/* Article body */}
-                      <textarea
-                        className="w-full text-sm border rounded-md px-2 py-2 outline-none focus:ring-2 focus:ring-indigo-500 min-h-[140px]"
-                        value={block.content}
-                        onChange={(e) =>
-                          updateBlock(block.id, { content: e.target.value })
-                        }
-                        placeholder="Write your iStacks article here. You can use blank lines and simple paragraphs."
-                      />
+                      <RichTextEditor
+  valueHtml={String(block.content ?? "")}
+  onChangeHtml={(html) => updateBlock(block.id, { content: html })}
+/>
                       <p className="text-[11px] text-gray-500">
                         Tip: Keep it simple for now — we can add rich
-                        formatting later.
+                        formatting later!
                       </p>
                     </div>
                   </div>

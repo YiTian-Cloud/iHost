@@ -3,6 +3,7 @@ import { Profile } from "@/models/Profile";
 import { Page } from "@/models/Page";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
+import DOMPurify from "isomorphic-dompurify";
 
 
 export default async function PublicProfilePage({
@@ -259,9 +260,14 @@ export default async function PublicProfilePage({
               Click to collapse
             </span>
           </summary>
-          <div className="px-4 pb-4 pt-1 text-sm text-gray-800 whitespace-pre-wrap border-t border-indigo-100">
-            {block.content}
-          </div>
+          <div
+  className="px-4 pb-4 pt-3 text-sm text-gray-800 border-t border-indigo-100
+             prose prose-sm max-w-none prose-headings:mt-3 prose-p:my-2 prose-li:my-1"
+  dangerouslySetInnerHTML={{
+    __html: DOMPurify.sanitize(String(block.content ?? "")),
+  }}
+/>
+
         </details>
       ))}
     </div>

@@ -10,7 +10,16 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@tiptap/extension-color": "^3.14.0",
+    "@tiptap/extension-hard-break": "^3.14.0",
+    "@tiptap/extension-highlight": "^3.14.0",
+    "@tiptap/extension-text-align": "^3.14.0",
+    "@tiptap/extension-text-style": "^3.14.0",
+    "@tiptap/extension-underline": "^3.14.0",
+    "@tiptap/react": "^3.14.0",
+    "@tiptap/starter-kit": "^3.14.0",
     "bcrypt": "^6.0.0",
+    "isomorphic-dompurify": "^2.34.0",
     "jsonwebtoken": "^9.0.2",
     "mogoose": "^0.0.1-security",
     "mongoose": "^8.20.0",
